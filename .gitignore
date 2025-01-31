@@ -1,0 +1,11 @@
+*.xlsx
+*.INC
+*.gdx
+*.log
+*.lst
+*.lxi
+/backup
+
+
+
+
