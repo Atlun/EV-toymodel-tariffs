@@ -4,6 +4,9 @@
 *.log
 *.lst
 *.lxi
+*.cmd
+*.dat
+*.~log
 /backup
 
 
