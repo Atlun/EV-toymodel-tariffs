@@ -1,0 +1,13 @@
+Threads=7
+Method=2
+FeasibilityTol=1e-9
+OptimalityTol=1e-9
+Presolve=2
+PreSparsify=1
+Cuts=2
+NonConvex=2
+Crossover=0
+MIPGap=1e-9
+DisplayInterval=1
+NodeMethod=2
+iis=1
