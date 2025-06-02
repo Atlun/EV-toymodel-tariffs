@@ -177,9 +177,9 @@ Positive variables
 V_PEVcharging_slow (timestep,trsp,priceareas) charging of the vehicle battery [kWh per timestep]
 V_PEV_storage (timestep,trsp,priceareas) Storage level of the vehicle battery [kWh per timestep]
 V_PEV_need (timestep,trsp,priceareas) vehicle kilometers not met by charging [kWh per timestep]
-V_fuse(trsp,priceareas)
-V_power_monthly(month,trsp,priceareas)
-V_common_power(priceareas)
+V_fuse(trsp,priceareas) fuse size [kW per pricearea]
+V_power_monthly(month,trsp,priceareas) monthly peak power consumption [kW per month]
+V_common_power(priceareas) common power consumption [kW per pricearea]
 ;
 
 
@@ -211,7 +211,6 @@ $if %Temporal_Resolution == hours        + sum(timestep, V_PEVcharging_slow(time
 
 EQU_EVstoragelevel(timestep,trsp,priceareas)..
     V_PEV_storage(timestep++1,trsp,priceareas) =E= V_PEV_storage(timestep,trsp,priceareas) + V_PEVcharging_slow(timestep,trsp,priceareas)*Beff_EV*EV_home(timestep,trsp) + EV_demand(timestep,trsp) * DemandFactor + V_PEV_need (timestep,trsp,priceareas)*Beff_EV*(1-EV_home(timestep,trsp));
-*Unit is kWh, however not consistent with Eprice which is in €/MWh
 
 EQU_fuse_need(timestep,trsp,priceareas)..
 V_PEVcharging_slow(timestep,trsp,priceareas)*kWhtokW+residential_demand(timestep)*kWhtokW/1000 =L= V_fuse(trsp,priceareas);
