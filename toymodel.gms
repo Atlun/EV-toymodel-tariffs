@@ -245,5 +245,7 @@ Solve EV_charge using lp minimizing vtotcost;
 
 
 Execute_unload '%Casename%.gdx';
-execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
-execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEVcharging_slow rng=Slow_charging!a1";
+*execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
+executeTool 'csvwrite id=V_PEVcharging_slow file=%Casename%.csv';
+executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
+*execute "gdxxrw %Casename%.gdx o=%Casename%.csv symb=V_PEVcharging_slow format=csv";
