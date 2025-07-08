@@ -104,7 +104,7 @@ $ifThen %Temporal_Resolution% ==10_min
 Table EV_home(timestep,trsp_all)  notes if car is home or not [1 if home and able to charge - otherwise 0]
 $include ./homeshare_10min_short.inc
 ;
-Table EV_demand(timestep,trsp_all)  electricity demand per car in each daily driving profile [kWh per hour]
+Table EV_demand(timestep,trsp_all)  electricity demand per car in each daily driving profile [kWh per timestep]
 $include ./tripenergy_10min_short.inc
 ;
 
@@ -127,6 +127,7 @@ $include "demand_bil_YDP426.inc"
 
 Table eprice(timestep,priceareas) 
 $include ./eprice_priceareas_%year%.inc
+* €/MWh (unit conversion  for energy demand in in cost eq as energy in normally in kWh)
 ;
 
 Parameter residential_demand(timestep) /
@@ -195,7 +196,7 @@ EQU_common_power(timestep,priceareas)
 V_PEV_storage.up(timestep,trsp,priceareas)=Batterysize;
 V_PEVcharging_slow.up(timestep,trsp,priceareas)=Charge_Power;
 
-$if %Monthly_Power_Cost%==no V_power_monthly.fx(month,trs,priceareas)=0;
+$if %Monthly_Power_Cost%==no V_power_monthly.fx(month,trsp,priceareas)=0;
 $if %Annual_Power_Cost%==no V_fuse.fx(trsp,priceareas)=0;
 $if %Common_Power_Cost%==no V_common_power.fx(priceareas)=0;
 
@@ -204,13 +205,13 @@ EQU_totcost..
 vtotcost =E= 
     sum(priceareas, sum(trsp, 
         sum(timestep, V_PEV_need(timestep,trsp,priceareas)*Price_fastcharge)  
-$if %Temporal_Resolution == 10_min        + sum(hours, sum(timestep $ maptimestep2hour(timestep, hours), V_PEVcharging_slow(timestep,trsp,priceareas)) * epriceh(hours))
+$if %Temporal_Resolution == 10_min        + sum(hours, sum(timestep $ maptimestep2hour(timestep, hours), V_PEVcharging_slow(timestep,trsp,priceareas)) * ktoM  * epriceh(hours))
 $if %Temporal_Resolution == hours        + sum(timestep, V_PEVcharging_slow(timestep,trsp,priceareas) * ktoM * eprice(timestep))
         + (V_fuse(trsp,priceareas) * 12 + sum(month, V_power_monthly(month, trsp,priceareas))) * Fuse_cost)
         + V_common_power(priceareas) * Fuse_cost);
 
 EQU_EVstoragelevel(timestep,trsp,priceareas)..
-    V_PEV_storage(timestep++1,trsp,priceareas) =E= V_PEV_storage(timestep,trsp,priceareas) + V_PEVcharging_slow(timestep,trsp,priceareas)*Beff_EV*EV_home(timestep,trsp) + EV_demand(timestep,trsp) * DemandFactor + V_PEV_need (timestep,trsp,priceareas)*Beff_EV*(1-EV_home(timestep,trsp));
+V_PEV_storage(timestep++1,trsp,priceareas) =E= V_PEV_storage(timestep,trsp,priceareas) + V_PEVcharging_slow(timestep,trsp,priceareas)*Beff_EV*EV_home(timestep,trsp) + EV_demand(timestep,trsp) * DemandFactor + V_PEV_need (timestep,trsp,priceareas)*Beff_EV*(1-EV_home(timestep,trsp));
 
 EQU_fuse_need(timestep,trsp,priceareas)..
 V_PEVcharging_slow(timestep,trsp,priceareas)*kWhtokW+residential_demand(timestep)*kWhtokW/1000 =L= V_fuse(trsp,priceareas);
