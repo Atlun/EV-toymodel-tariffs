@@ -45,8 +45,11 @@ month
 
 
 $ifThen %Temporal_Resolution% ==10_min
-timestep
+timestep_all
 /t00001*t52560/
+
+timestep(timestep_all)
+/t00001*t00100/
 
 hours
 / h0001*h8760 /
@@ -77,7 +80,7 @@ maptimestep2hour(timestep, hours) = yes $ (ord(timestep) >= firsttimestepinhour(
 
 $elseIf %Temporal_Resolution% ==hours
 timestep
-/h0001*h8760/
+/h0001*h8784/
 
 trsp /
 $include ./trsp_426.inc 
@@ -101,11 +104,11 @@ maptimestep2month(timestep, month) = yes $ (ord(timestep) >= firsttimestepinmont
 
 $ifThen %Temporal_Resolution% ==10_min
 
-Table EV_home(timestep,trsp_all)  notes if car is home or not [1 if home and able to charge - otherwise 0]
 $include ./homeshare_10min_short.inc
+Table EV_home(timestep_all,trsp_all)  notes if car is home or not [1 if home and able to charge - otherwise 0]
 ;
-Table EV_demand(timestep,trsp_all)  electricity demand per car in each daily driving profile [kWh per timestep]
 $include ./tripenergy_10min_short.inc
+Table EV_demand(timestep_all,trsp_all)  electricity demand per car in each daily driving profile [kWh per timestep]
 ;
 
 Table epriceh(hours,priceareas) 

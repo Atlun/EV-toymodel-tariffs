@@ -2,8 +2,11 @@ $setglobal Year "2024"
 $setglobal Casename "BabyTM_%Year%"
 
 Sets
-timestep
+timestep_all
 /t00001*t52560/
+
+timestep(timestep_all)
+/t00001*t00100/
 
 trsp_all /
 *$include ./logged_carnames.inc
@@ -13,19 +16,18 @@ trsp(trsp_all) / b100, b102, b103, b109, b10D, b10E, b10_1, b110, b113, b115, b1
 ;
 
 
-Table EV_home(timestep,trsp_all)  notes if car is home or not [1 if home and able to charge - otherwise 0]
+Table EV_home(timestep_all,trsp_all)  notes if car is home or not [1 if home and able to charge - otherwise 0]
 $include ./homeshare_10min_short.inc
 ;
-Table EV_demand(timestep,trsp_all)  electricity demand per car in each daily driving profile [kWh per timestep]
+Table EV_demand(timestep_all,trsp_all)  electricity demand per car in each daily driving profile [kWh per timestep]
 $include ./tripenergy_10min_short.inc
 ;
 
-Parameter residential_demand(timestep) /
+Parameter residential_demand(timestep_all) /
 $include ./HH_demand_10min.inc
 /;
 
-Parameter epriceh(timestep)/
-
+Parameter epriceh(timestep_all)/
 $include ./eprice_10min_2024.inc
 /;
 * €/MWh (unit conversion  for energy demand in in cost eq as energy in normally in kWh)
@@ -45,7 +47,6 @@ Batterysize=100;
 Price_fastcharge=1;
 *€/kWh
 Charge_Power=6.9;
-*€/kW monthly
 ktoM=1/1000;
 kWhtokW=6;
 Charge_Power=6.9/kWhtokW;
