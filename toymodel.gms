@@ -1,9 +1,13 @@
+$offlisting
+option limrow=0, limcol=0, solprint=off, profile=3;
+
 $setglobal path "C:\Users\thelun\Documents\GAMS\EV charging"
 $setglobal Output_path "C:\Users\thelun\Documents\GAMS\EV charging"
 
 $setglobal Year "2023"
 $setglobal Temporal_Resolution "10_min"
 *Set temporal resolution to either "hours" or "10_min"
+*Set the first two to yes to use tariffs
 $setglobal Annual_Power_Cost "no"          
 $setglobal Monthly_Power_Cost "no"         
 $setglobal Common_Power_Cost "no"           
@@ -74,9 +78,11 @@ lasttimestepinhour(hours) = ord(hours) * TimestepsPerHour;
 firsttimestepinhour(hours) = lasttimestepinhour(hours-1) + 1;
 firsttimestepinhour('h0001') = 1;
 
-set maptimestep2hour(timestep, hours);
-maptimestep2hour(timestep, hours) = yes $ (ord(timestep) >= firsttimestepinhour(hours) and ord(timestep) <= lasttimestepinhour(hours));
+parameter t2h(timestep);
+t2h(timestep) = ceil(ord(timestep)/TimestepsPerHour);
 
+set maptimestep2hour(timestep, hours);
+maptimestep2hour(timestep, hours) = yes$(t2h(timestep) = ord(hours));
 
 $elseIf %Temporal_Resolution% ==hours
 timestep
@@ -255,3 +261,12 @@ executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
 executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
 
 *execute "gdxxrw %Casename%.gdx o=%Casename%.csv symb=V_PEVcharging_slow format=csv";
+
+* Display total charging (slow + fast) over all vehicles and time periods
+Scalar total_slow_charging, total_fast_charging, total_charging;
+
+total_slow_charging = sum((timestep,trsp,priceareas), V_PEVcharging_slow.l(timestep,trsp,priceareas));
+total_fast_charging = sum((timestep,trsp,priceareas), V_PEV_need.l(timestep,trsp,priceareas));
+total_charging = total_slow_charging + total_fast_charging;
+
+display total_slow_charging, total_fast_charging, total_charging;
