@@ -204,6 +204,8 @@ EQU_common_power(timestep,priceareas)
 
 V_PEV_storage.up(timestep,trsp,priceareas)=Batterysize;
 V_PEVcharging_slow.up(timestep,trsp,priceareas)=Charge_Power;
+V_PEVcharging_slow.fx(timestep,trsp,priceareas) $ (not(EV_home(timestep,trsp)))=0;
+V_PEV_need.fx(timestep,trsp,priceareas) $ EV_home(timestep,trsp)=0;
 
 $if %Monthly_Power_Cost%==no V_power_monthly.fx(month,trsp,priceareas)=0;
 $if %Annual_Power_Cost%==no V_fuse.fx(trsp,priceareas)=0;
@@ -254,11 +256,11 @@ Solve EV_charge using lp minimizing vtotcost;
 
 
 
-Execute_unload '%Casename%.gdx';
-*execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
-executeTool 'csvwrite id=V_PEVcharging_slow file=%Casename%.csv';
-executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
-executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
+* Execute_unload '%Casename%.gdx';
+* *execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
+* executeTool 'csvwrite id=V_PEVcharging_slow file=%Casename%.csv';
+* executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
+* executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
 
 *execute "gdxxrw %Casename%.gdx o=%Casename%.csv symb=V_PEVcharging_slow format=csv";
 
