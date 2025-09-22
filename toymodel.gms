@@ -116,6 +116,7 @@ $include ./homeshare_10min.inc
 Table EV_demand(timestep_all,trsp_all)  electricity demand per car in each daily driving profile [kWh per timestep]
 $include ./tripenergy.inc
 ;
+EV_demand(timestep_all,trsp_all)$(EV_demand(timestep_all,trsp_all)>0)=0;
 
 Table epriceh(hours,priceareas) 
 $include ./eprice_priceareas_%year%.inc
@@ -256,11 +257,11 @@ Solve EV_charge using lp minimizing vtotcost;
 
 
 
-* Execute_unload '%Casename%.gdx';
-* *execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
-* executeTool 'csvwrite id=V_PEVcharging_slow file=%Casename%.csv';
-* executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
-* executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
+Execute_unload '%Casename%.gdx';
+*execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
+executeTool 'csvwrite id=V_PEVcharging_slow file=%Casename%.csv';
+executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
+executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
 
 *execute "gdxxrw %Casename%.gdx o=%Casename%.csv symb=V_PEVcharging_slow format=csv";
 
