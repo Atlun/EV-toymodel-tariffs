@@ -7,17 +7,23 @@ $setglobal Output_path "C:\Users\thelun\Documents\GAMS\EV charging"
 $setglobal Year "2023"
 $setglobal Temporal_Resolution "10_min"
 *Set temporal resolution to either "hours" or "10_min"
+$setglobal RealBatteryCap "yes"
+* Set to real for estimated battery caps
+
 *Set the first two to yes to use tariffs
 $setglobal Annual_Power_Cost "no"          
 $setglobal Monthly_Power_Cost "no"         
 $setglobal Common_Power_Cost "no"           
-$setglobal Fixed_Common_Power "no"         
-$setglobal Casename "Toymodel_opt_%Temporal_Resolution%_%Year%"
+$setglobal Fixed_Common_Power "no"
+$setGlobal Time_Differentiated "no"
+
+$setglobal Casename "Test_Realcap_%RealBatteryCap%_%Temporal_Resolution%_%Year%"
 
 $if %Annual_Power_Cost% == yes $setglobal Casename "%Casename%_annual"
 $if %Monthly_Power_Cost% == yes $setglobal Casename "%Casename%_month"
 $if %Common_Power_Cost% == yes $setglobal Casename "%Casename%_common"
 $if %Fixed_Common_Power% == yes $setglobal Casename "%Casename%_fixedP"
+$if %Time_Differentiated% == yes $setglobal Casename "%Casename%_timediff"
 
 Sets
 priceareas
@@ -28,7 +34,10 @@ priceareas
 
 Scalar
 TimestepsPerHour
+NumberOfCars
 DemandFactor;
+
+NumberOfCars = 154;
 
 $ifThen %Temporal_Resolution% ==10_min
 TimestepsPerHour=6;
@@ -62,6 +71,7 @@ trsp_all /
 $include ./names_logged.inc
     /
     
+
 *trsp(trsp_all) / b100, b102, b103 /
 *trsp(trsp_all) / b100, b102, b103 , b109,b10E, b10_1, b110, b113, b115, b117, b11B, b12_1, b13, b14_2, b15, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b26, b29, b2B, b2E, b2F, b2_1, b30, b31, b32, b33, b35, b36, b37, b38, b3B, b3C, b3D, b3E, b3F, b3_1, b41, b43, b44, b47_2, b48, b4A, b4B_1, b4E, b4F, b4_1 / 
 *trsp(trsp_all) / b100, b102, b103, b109, b10A, b10E, b10_1, b110, b113, b115, b117, b11B, b12_1, b13, b14_2, b15, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b26, b29, b2B, b2E, b2F, b2_1, b30, b31, b32, b33, b35, b36, b37, b38, b3B, b3C, b3D, b3E, b3F, b3_1, b41, b43, b44, b47_2, b48, b4A, b4B_1, b4E, b4F, b4_1 /
@@ -126,6 +136,9 @@ Parameter residential_demand(timestep_all) /
 $include ./HH_dem_10_min_all_houses.inc
 /;
 * Unit kW
+
+Parameter battery_capacity(trsp_all)/
+$include ./battery_capacity_real.inc
 /;
 
 $elseIf %Temporal_Resolution% ==hours
@@ -148,7 +161,16 @@ $include ./h_AVG_residential_demand.inc
 
 $endIf
 
+$ifThen %Time_Differentiated% == yes
+Parameter time_diff(timestep)/
+$include ./timestepsWPTariff.inc
+/;
 
+$else
+Parameter time_diff(timestep);
+time_diff(timestep) = 1;
+
+$endIf
 Scalar
 El_cost
 Beff_EV
@@ -158,6 +180,10 @@ Charge_Power
 Fuse_cost
 kWhtokW
 ktoM
+Monthly_P_cost_ind
+Monthly_P_cost_common
+Annual_P_cost
+Annual_P_cost_common
 ;
 
 Beff_EV=0.95;
@@ -167,8 +193,16 @@ Price_fastcharge=1;
 *€/kWh
 Charge_Power=6.9;
 Fuse_cost=10;
+Monthly_P_cost_ind=Fuse_cost;
+Monthly_P_cost_common=Fuse_cost;
+Annual_P_cost=Fuse_cost*12;
+Annual_P_cost_common=Fuse_cost*12;
 *€/kW monthly
 ktoM=1/1000;
+
+$if %Monthly_Power_Cost%==no Monthly_P_cost_ind=0;
+$if %Annual_Power_Cost%==no Annual_P_cost=0;
+$if %Common_Power_Cost%==no Monthly_P_cost_common=0;
 
 $ifThen %Temporal_Resolution% ==10_min
     kWhtokW=6;
@@ -192,7 +226,7 @@ V_PEV_storage (timestep,trsp,priceareas) Storage level of the vehicle battery [k
 V_PEV_need (timestep,trsp,priceareas) vehicle kilometers not met by charging [kWh per timestep]
 V_fuse(trsp,priceareas) fuse size [kW per pricearea]
 V_power_monthly(month,trsp,priceareas) monthly peak power consumption [kW per month]
-V_common_power(priceareas) common power consumption [kW per pricearea]
+V_common_power(month, priceareas) common power consumption [kW per pricearea]
 ;
 
 
@@ -205,14 +239,12 @@ EQU_common_power(timestep,priceareas)
 
 ;
 
-V_PEV_storage.up(timestep,trsp,priceareas)=Batterysize;
 V_PEVcharging_slow.up(timestep,trsp,priceareas)=Charge_Power;
 V_PEVcharging_slow.fx(timestep,trsp,priceareas) $ (not(EV_home(timestep,trsp)))=0;
 V_PEV_need.fx(timestep,trsp,priceareas) $ EV_home(timestep,trsp)=0;
 
-$if %Monthly_Power_Cost%==no V_power_monthly.fx(month,trsp,priceareas)=0;
-$if %Annual_Power_Cost%==no V_fuse.fx(trsp,priceareas)=0;
-$if %Common_Power_Cost%==no V_common_power.fx(priceareas)=0;
+$if %RealBatteryCap%==yes V_PEV_storage.up(timestep,trsp,priceareas)=battery_capacity(trsp);
+$if %RealBatteryCap%==no V_PEV_storage.up(timestep,trsp,priceareas)=Batterysize;
 
 
 EQU_totcost..
@@ -221,9 +253,8 @@ vtotcost =E=
         sum(timestep, V_PEV_need(timestep,trsp,priceareas)*Price_fastcharge)  
 $if %Temporal_Resolution% == 10_min        + sum(hours, sum(timestep $ maptimestep2hour(timestep, hours), V_PEVcharging_slow(timestep,trsp,priceareas)) * ktoM  * epriceh(hours,priceareas))
 $if %Temporal_Resolution% == hours        + sum(timestep, V_PEVcharging_slow(timestep,trsp,priceareas) * ktoM * eprice(timestep,priceareas))
-        + (V_fuse(trsp,priceareas) * 12 + sum(month, V_power_monthly(month, trsp,priceareas))) * Fuse_cost)
-        + V_common_power(priceareas) * Fuse_cost);
-
+        + V_fuse(trsp,priceareas) *Annual_P_cost  + sum(month, V_power_monthly(month, trsp,priceareas)*Monthly_P_cost_ind+V_common_power(month, priceareas)*Monthly_P_cost_common)));
+        
 EQU_EVstoragelevel(timestep,trsp,priceareas)..
 V_PEV_storage(timestep++1,trsp,priceareas) =E= V_PEV_storage(timestep,trsp,priceareas) + V_PEVcharging_slow(timestep,trsp,priceareas)*Beff_EV*EV_home(timestep,trsp) + EV_demand(timestep,trsp) * DemandFactor + V_PEV_need (timestep,trsp,priceareas)*Beff_EV*(1-EV_home(timestep,trsp));
 
@@ -239,11 +270,12 @@ EQU_common_power(timestep,priceareas)..
 
 Model EV_charge /
 *Add missing equation names here to be part of model
-EQU_totcost
-EQU_EVstoragelevel
-$if %Annual_Power_Cost%==yes EQU_fuse_need
-$if %Monthly_Power_Cost%==yes EQU_month_p_need
-$if %Common_Power_Cost%==yes EQU_common_power
+All
+*EQU_totcost
+*EQU_EVstoragelevel
+*$if %Annual_Power_Cost%==yes EQU_fuse_need
+*$if %Monthly_Power_Cost%==yes EQU_month_p_need
+*$if %Common_Power_Cost%==yes EQU_common_power
 
              /;
 
