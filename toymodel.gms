@@ -188,7 +188,7 @@ Annual_P_cost_common
 
 Beff_EV=0.95;
 El_cost=1;
-Batterysize=100; 
+Batterysize=70; 
 Price_fastcharge=1;
 *€/kWh
 Charge_Power=6.9;
