@@ -123,7 +123,9 @@ $include ./eprice_priceareas_%year%.inc
 * €/MWh (unit conversion  for energy demand in in cost eq as energy in normally in kWh)
 ;
 Parameter residential_demand(timestep_all) /
-$include ./HH_demand_10min.inc
+$include ./HH_dem_10_min_all_houses.inc
+/;
+* Unit kW
 /;
 
 $elseIf %Temporal_Resolution% ==hours
@@ -226,13 +228,13 @@ EQU_EVstoragelevel(timestep,trsp,priceareas)..
 V_PEV_storage(timestep++1,trsp,priceareas) =E= V_PEV_storage(timestep,trsp,priceareas) + V_PEVcharging_slow(timestep,trsp,priceareas)*Beff_EV*EV_home(timestep,trsp) + EV_demand(timestep,trsp) * DemandFactor + V_PEV_need (timestep,trsp,priceareas)*Beff_EV*(1-EV_home(timestep,trsp));
 
 EQU_fuse_need(timestep,trsp,priceareas)..
-V_PEVcharging_slow(timestep,trsp,priceareas)*kWhtokW + residential_demand(timestep)*kWhtokW/1000 =L= V_fuse(trsp,priceareas);
+(V_PEVcharging_slow(timestep,trsp,priceareas)*kWhtokW + residential_demand(timestep)/1000)*time_diff(timestep) =L= V_fuse(trsp,priceareas);
 
 EQU_month_p_need(timestep, trsp,priceareas)..
-V_PEVcharging_slow(timestep, trsp,priceareas)*kWhtokW + residential_demand(timestep)*kWhtokW/1000 =L= sum(month $ maptimestep2month(timestep, month), V_power_monthly(month, trsp,priceareas));
+(V_PEVcharging_slow(timestep, trsp,priceareas)*kWhtokW + residential_demand(timestep)/1000)*time_diff(timestep) =L= sum(month $ maptimestep2month(timestep, month), V_power_monthly(month, trsp,priceareas));
 
 EQU_common_power(timestep,priceareas)..
-sum(trsp, V_PEVcharging_slow(timestep, trsp,priceareas)*kWhtokW) =L= V_common_power(priceareas)
+(sum(trsp, V_PEVcharging_slow(timestep, trsp,priceareas)*kWhtokW)+ residential_demand(timestep)/1000*NumberOfCars)*time_diff(timestep) =L=sum(month $ maptimestep2month(timestep, month), V_common_power(month, priceareas));
 
 
 Model EV_charge /
