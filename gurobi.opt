@@ -1,8 +1,8 @@
-Threads=7
+Threads=16
 Method=2
 FeasibilityTol=1e-9
 OptimalityTol=1e-9
-Presolve=2
+Presolve=1
 PreSparsify=1
 Cuts=2
 NonConvex=2
