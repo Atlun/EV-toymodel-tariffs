@@ -227,6 +227,7 @@ V_PEV_need (timestep,trsp,priceareas) vehicle kilometers not met by charging [kW
 V_fuse(trsp,priceareas) fuse size [kW per pricearea]
 V_power_monthly(month,trsp,priceareas) monthly peak power consumption [kW per month]
 V_common_power(month, priceareas) common power consumption [kW per pricearea]
+V_maxF_all(month, priceareas) common power consumption [kW per pricearea]
 ;
 
 
@@ -236,6 +237,7 @@ EQU_EVstoragelevel(timestep,trsp,priceareas)
 EQU_fuse_need(timestep,trsp,priceareas)
 EQU_month_p_need(timestep,trsp,priceareas)
 EQU_common_power(timestep,priceareas)
+EQU_maxfuse(timestep,priceareas)
 
 ;
 
@@ -245,6 +247,7 @@ V_PEV_need.fx(timestep,trsp,priceareas) $ EV_home(timestep,trsp)=0;
 
 $if %RealBatteryCap%==yes V_PEV_storage.up(timestep,trsp,priceareas)=battery_capacity(trsp);
 $if %RealBatteryCap%==no V_PEV_storage.up(timestep,trsp,priceareas)=Batterysize;
+$if %Time_Differentiated%==no V_maxF_all.fx(month, priceareas)=0
 
 
 EQU_totcost..
@@ -267,15 +270,18 @@ EQU_month_p_need(timestep, trsp,priceareas)..
 EQU_common_power(timestep,priceareas)..
 (sum(trsp, V_PEVcharging_slow(timestep, trsp,priceareas)*kWhtokW)+ residential_demand(timestep)/1000*NumberOfCars)*time_diff(timestep) =L=sum(month $ maptimestep2month(timestep, month), V_common_power(month, priceareas));
 
+EQU_maxfuse(timestep,priceareas)..
+(sum(trsp, V_PEVcharging_slow(timestep, trsp,priceareas)*kWhtokW)+ residential_demand(timestep)/1000*NumberOfCars) =L=sum(month $ maptimestep2month(timestep, month), V_maxF_all(month, priceareas));
+
 
 Model EV_charge /
 *Add missing equation names here to be part of model
-All
-*EQU_totcost
-*EQU_EVstoragelevel
-*$if %Annual_Power_Cost%==yes EQU_fuse_need
-*$if %Monthly_Power_Cost%==yes EQU_month_p_need
-*$if %Common_Power_Cost%==yes EQU_common_power
+EQU_totcost
+EQU_EVstoragelevel
+EQU_fuse_need
+EQU_month_p_need
+EQU_common_power
+$if %Time_Differentiated%==yes EQU_maxfuse
 
              /;
 
@@ -288,7 +294,6 @@ option solver=gurobi
 *option solver=osigurobi;
 
 Solve EV_charge using lp minimizing vtotcost;
-
 
 
 Execute_unload '%Casename%.gdx';
@@ -307,3 +312,5 @@ total_fast_charging = sum((timestep,trsp,priceareas), V_PEV_need.l(timestep,trsp
 total_charging = total_slow_charging + total_fast_charging;
 
 display total_slow_charging, total_fast_charging, total_charging;
+
+
