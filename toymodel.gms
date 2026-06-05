@@ -4,7 +4,7 @@ option limrow=0, limcol=0, solprint=off, profile=3;
 $setglobal path "C:\Users\thelun\Documents\GAMS\EV charging"
 $setglobal Output_path "C:\Users\thelun\Documents\GAMS\EV charging"
 
-$setglobal Year "2023"
+$setglobal Year "2024"
 *Set temporal resolution to either "hours" or "10_min"
 $setglobal RealBatteryCap "yes"
 $setglobal Temporal_Resolution "15_min"
@@ -13,16 +13,14 @@ $setglobal Temporal_Resolution "15_min"
 *Set the first two to yes to use tariffs
 $setglobal Annual_Power_Cost "no"          
 $setglobal Monthly_Power_Cost "no"         
-$setglobal Common_Power_Cost "no"           
-$setglobal Fixed_Common_Power "no"
+$setglobal Common_Power_Cost "yes"           
 $setGlobal Time_Differentiated "no"
 
-$setglobal Casename "Test_Realcap_%RealBatteryCap%_%Temporal_Resolution%_%Year%"
+$setglobal Casename "Realcap_%RealBatteryCap%_%Temporal_Resolution%_%Year%"
 
 $if %Annual_Power_Cost% == yes $setglobal Casename "%Casename%_annual"
 $if %Monthly_Power_Cost% == yes $setglobal Casename "%Casename%_month"
 $if %Common_Power_Cost% == yes $setglobal Casename "%Casename%_common"
-$if %Fixed_Common_Power% == yes $setglobal Casename "%Casename%_fixedP"
 $if %Time_Differentiated% == yes $setglobal Casename "%Casename%_timediff"
 
 Sets
@@ -107,6 +105,7 @@ EV_demand(timestep_all,trsp_all)$(EV_demand(timestep_all,trsp_all)>0)=0;
 Parameter residential_demand(timestep_all) /
 *$include ./HH_dem_15min.inc
 $include ./HH_dem_91A2.inc
+*HH_dem_91A2.inc is the average profile of 188 households
 /;
 * Unit kWh
 residential_demand(timestep_all)=residential_demand(timestep_all)*TimestepsPerHour*1000;
@@ -118,12 +117,12 @@ $include ./Battery_cap_15min_2.inc
 $endIf
 
 Sets
-trsp(trsp_all) / b100, b102, b103 /
+*trsp(trsp_all) / b100, b102, b103 /
 *trsp(trsp_all) / b100, b101, b102, b103, b105, b109, b10A, b10C, b10D, b10E, b10_1, b11, b110, b111, b113, b115, b11B, b12_1, b13, b14_2, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b23, b24, b26, b27, b29, b2A_1, b2C, b2E, b2F, b2_1 / 
 *trsp(trsp_all) / b100, b102, b103, b109, b10A, b10E, b10_1, b110, b113, b115, b117, b11B, b12_1, b13, b14_2, b15, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b26, b29, b2B, b2E, b2F, b2_1, b30, b31, b32, b33, b35, b36, b37, b38, b3B, b3C, b3D, b3E, b3F, b3_1, b41, b43, b44, b47_2, b48, b4A, b4B_1, b4E, b4F, b4_1 /
 *trsp(trsp_all) / b100, b102, b103, b109, b10A, b10E, b10_1, b110, b113, b115, b117, b11B, b12_1, b13, b14_2, b15, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b26, b29, b2B, b2E, b2F, b2_1, b30, b31, b32, b33, b35, b36, b37, b38, b3B, b3C, b3D, b3E, b3F, b3_1, b41,  b43, b44, b47_2, b48, b4A, b4B_1, b4E, b4F, b4_1, b50, b52, b55, b58, b59, b5B, b5C, b5_1,b63, b64, b65, b66, b6A, b6B, b6C, b6E, b70, b74, b75, b77, b78, b79, b7B, b7C, b7D, b7E, b7_1  /
 *trsp(trsp_all) / b100, b102, b103, b109, b10D, b10E, b10_1, b110, b113, b115, b117, b11B, b12_1, b13, b14_2, b15, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b26, b29, b2B, b2E, b2F, b2_1, b30, b31, b32, b33, b35, b36, b37, b38, b3B, b3C, b3D, b3E, b3F, b3_1, b41, b43, b44, b47_2, b48, b4A, b4B_1, b4E, b4F, b4_1, b50, b52, b55, b58, b59, b5B, b5C, b5_1, b63, b64, b65, b66, b6A, b6B, b6C, b6E, b70, b74, b75, b77, b78, b79, b7B, b7C, b7D, b7E, b7_1, b80, b87, b88, b8A, b8C, b8D, b8E, b90, b92, b95, b96, b97, b98, b99_1, b9A, b9C, b9D_1, b9E, b9F, b9_1, bA0, bA2, bA3, bA7, bA8, bAC, bAD, bAE, bA_1, bB3, bB4, bB5, bB6, bB7, bB8, bB9, bBB, bBD, bBF, bC0, bC2, bC5, bC8, bC9, bCA_1, bCD, bCF, bC_1, bD1, bD2, bD5, bD6, bD7, bD8, bD9, bDE, bDF, bE5, bE7, bE9, bEB, bF0, bF1, bF4, bF5, bF6, bF7, bF8, bF9, bFA, bFC  /
-*trsp(trsp_all) / b100, b101, b102, b103, b105, b109, b10A, b10C, b10D, b10E, b10_1, b11, b110, b111, b113, b115, b11B, b12_1, b13, b14_2, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b23, b24, b26, b27, b29, b2A_1, b2C, b2E, b2F, b2_1, b30, b31, b32, b33, b34, b35, b36, b37, b38, b3B, b3D, b3E, b3F, b3_1, b41, b42, b43, b44, b47_2, b48, b4A, b4B_1, b4C_2, b4E, b4F, b4_1, b50, b51, b52, b55, b56, b57, b58, b59, b5A, b5B, b5C, b5_1, b60, b61, b62, b63, b64, b65, b66, b69, b6B, b6C, b6D, b6E, b6F, b6_1, b70, b73, b74, b75, b76, b77, b78, b7B, b7C, b7D, b7E, b7_1, b80, b82, b84, b85, b87, b88, b89, b8A, b8B, b8C, b8D, b8E, b90, b92, b94, b95, b96, b97, b98, b99_1, b9A, b9D_1, b9E, b9F, b9_1, bA0, bA2, bA3, bA7, bA8, bAA, bAC, bAD, bAE, bAF, bB0, bB2, bB3, bB4, bB6, bB7, bB8, bB9, bBA, bBB, bBF, bB_1, bC2, bC3, bC8, bC9, bCD, bCF, bC_1, bD1, bD2, bD3, bD5, bD6, bD7, bD8, bD9, bDC, bDE, bDF, bE1, bE3, bE5, bE7, bE9, bEB, bEE, bF0, bF1, bF3, bF4, bF5, bF6, bF7, bF9, bFA, bFB, bFC, bFD  /
+trsp(trsp_all) / b100, b101, b102, b103, b105, b109, b10A, b10C, b10D, b10E, b10_1, b11, b110, b111, b113, b115, b11B, b12_1, b13, b14_2, b17_1, b18_1, b1B, b1C, b1D, b1F, b1_1, b20, b21, b22, b23, b24, b26, b27, b29, b2A_1, b2C, b2E, b2F, b2_1, b30, b31, b32, b33, b34, b35, b36, b37, b38, b3B, b3D, b3E, b3F, b3_1, b41, b42, b43, b44, b47_2, b48, b4A, b4B_1, b4C_2, b4E, b4F, b4_1, b50, b51, b52, b55, b56, b57, b58, b59, b5A, b5B, b5C, b5_1, b60, b61, b62, b63, b64, b65, b66, b69, b6B, b6C, b6D, b6E, b6F, b6_1, b70, b73, b74, b75, b76, b77, b78, b7B, b7C, b7D, b7E, b7_1, b80, b82, b84, b85, b87, b88, b89, b8A, b8B, b8C, b8D, b8E, b90, b92, b94, b95, b96, b97, b98, b99_1, b9A, b9D_1, b9E, b9F, b9_1, bA0, bA2, bA3, bA7, bA8, bAA, bAC, bAD, bAE, bAF, bB0, bB2, bB3, bB4, bB6, bB7, bB8, bB9, bBA, bBB, bBF, bB_1, bC2, bC3, bC8, bC9, bCD, bCF, bC_1, bD1, bD2, bD3, bD5, bD6, bD7, bD8, bD9, bDC, bDE, bDF, bE1, bE3, bE5, bE7, bE9, bEB, bEE, bF0, bF1, bF3, bF4, bF5, bF6, bF7, bF9, bFA, bFB, bFC, bFD  /
 ;
 
 Table epriceh(hours,priceareas) 
@@ -199,7 +198,6 @@ El_cost=1;
 Batterysize=70; 
 Price_fastcharge=0.56;
 *€/kWh
-Charge_Power=6.9;
 Fuse_cost=7.4;
 Monthly_P_cost_ind=Fuse_cost;
 Monthly_P_cost_common=Fuse_cost;
@@ -333,7 +331,7 @@ Execute_unload '%Casename%.gdx';
 *execute "gdxxrw %Casename%.gdx o=%Casename%.xlsx squeeze=0 var=V_PEV_need rng=Fast_charging!a1";
 executeTool 'csvwrite id=V_PEVcharging_slow file=%Casename%.csv';
 executeTool 'csvwrite id=V_PEV_need file=%Casename%_fast_charging.csv';
-executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
+*executeTool 'csvwrite id=EV_demand file=%Casename%_demand.csv';
 
 *execute "gdxxrw %Casename%.gdx o=%Casename%.csv symb=V_PEVcharging_slow format=csv";
 
